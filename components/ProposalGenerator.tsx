@@ -107,7 +107,7 @@ export default function ProposalGenerator() {
           branding,
           history: [
             { role: 'assistant', content: `PROPOSTA ATUAL:\n${proposal}` },
-            ...newHistory.filter(m => m.content !== 'Aqui está a primeira versão da sua proposta. O que gostaria de ajustar?')
+            ...chatHistory.filter(m => m.content !== 'Aqui está a primeira versão da sua proposta. O que gostaria de ajustar?')
           ],
         }),
       })
@@ -202,7 +202,7 @@ export default function ProposalGenerator() {
       ) : (
         <div className="flex flex-col h-[calc(100vh-120px)] bg-gray-50 rounded-2xl overflow-hidden shadow-2xl border border-gray-200">
           {/* Header */}
-          <div className="bg-white px-6 py-4 border-b flex justify-between items-center">
+          <div className="bg-white px-6 py-4 border-b flex justify-between items-center print:hidden">
             <div>
               <h2 className="text-xl font-bold text-gray-800">Refinando Proposta</h2>
               <p className="text-sm text-gray-500">Cliente: {formData.clientName}</p>
@@ -225,7 +225,7 @@ export default function ProposalGenerator() {
 
           <div className="flex flex-1 overflow-hidden">
             {/* Left Pane: Chat */}
-            <div className="w-full md:w-[400px] flex flex-col bg-white border-r border-gray-200">
+            <div className="w-full md:w-[400px] flex flex-col bg-white border-r border-gray-200 print:hidden">
               <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
                 {chatHistory.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -275,7 +275,7 @@ export default function ProposalGenerator() {
             </div>
 
             {/* Right Pane: Preview */}
-            <div className="hidden md:block flex-1 bg-gray-200 p-8 overflow-y-auto">
+            <div className="hidden md:block flex-1 bg-gray-200 p-8 overflow-y-auto print:block print:p-0 print:m-0 print:bg-white">
               <div className="max-w-[800px] mx-auto min-h-full">
                 {proposal ? (
                   <MarkdownPreview content={proposal} branding={branding} />
@@ -292,4 +292,3 @@ export default function ProposalGenerator() {
     </div>
   )
 }
-

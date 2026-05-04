@@ -1,5 +1,6 @@
 'use client'
 
+import React, { useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 
 type Branding = {
@@ -15,10 +16,18 @@ interface MarkdownPreviewProps {
   branding?: Branding | null
 }
 
-export default function MarkdownPreview({ content, branding }: MarkdownPreviewProps) {
+const MarkdownPreview = React.memo(function MarkdownPreview({ content, branding }: MarkdownPreviewProps) {
   const styles = {
     fontFamily: branding?.font_family || 'Inter, sans-serif',
   }
+
+  const components = useMemo(() => ({
+    h1: ({ children }: any) => <h1 style={{ color: branding?.primary_color || '#2563eb' }} className="mb-6">{children}</h1>,
+    h2: ({ children }: any) => <h2 style={{ color: branding?.primary_color || '#2563eb' }} className="mt-8 mb-4 border-b pb-2">{children}</h2>,
+    h3: ({ children }: any) => <h3 style={{ color: branding?.secondary_color || '#64748b' }} className="mt-6 mb-3">{children}</h3>,
+    strong: ({ children }: any) => <strong style={{ color: branding?.primary_color || '#2563eb' }}>{children}</strong>,
+    a: ({ href, children }: any) => <a href={href} style={{ color: branding?.primary_color || '#2563eb' }} className="underline hover:opacity-80 transition-opacity">{children}</a>,
+  }), [branding])
 
   return (
     <div className="bg-white p-8 shadow-inner min-h-full overflow-y-auto rounded-lg border border-gray-200" style={styles}>
@@ -29,15 +38,7 @@ export default function MarkdownPreview({ content, branding }: MarkdownPreviewPr
       )}
       
       <div className="prose prose-blue max-w-none prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-p:text-gray-700 prose-p:leading-relaxed">
-        <ReactMarkdown
-          components={{
-            h1: ({ children }) => <h1 style={{ color: branding?.primary_color || '#2563eb' }} className="mb-6">{children}</h1>,
-            h2: ({ children }) => <h2 style={{ color: branding?.primary_color || '#2563eb' }} className="mt-8 mb-4 border-b pb-2">{children}</h2>,
-            h3: ({ children }) => <h3 style={{ color: branding?.secondary_color || '#64748b' }} className="mt-6 mb-3">{children}</h3>,
-            strong: ({ children }) => <strong style={{ color: branding?.primary_color || '#2563eb' }}>{children}</strong>,
-            a: ({ href, children }) => <a href={href} style={{ color: branding?.primary_color || '#2563eb' }} className="underline hover:opacity-80 transition-opacity">{children}</a>,
-          }}
-        >
+        <ReactMarkdown components={components}>
           {content}
         </ReactMarkdown>
       </div>
@@ -48,4 +49,6 @@ export default function MarkdownPreview({ content, branding }: MarkdownPreviewPr
       </div>
     </div>
   )
-}
+})
+
+export default MarkdownPreview
