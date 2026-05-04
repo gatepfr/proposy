@@ -15,6 +15,7 @@ interface Profile {
 export default function AdminUserList() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -39,29 +40,39 @@ export default function AdminUserList() {
   }
 
   async function togglePlan(id: string, currentStatus: string) {
-    const newStatus = currentStatus === 'pro' ? 'free' : 'pro'
-    const { error } = await supabase
-      .from('profiles')
-      .update({ plan_status: newStatus })
-      .eq('id', id)
+    try {
+      setUpdatingId(id)
+      const newStatus = currentStatus === 'pro' ? 'free' : 'pro'
+      const { error } = await supabase
+        .from('profiles')
+        .update({ plan_status: newStatus })
+        .eq('id', id)
 
-    if (error) {
-      alert(error.message)
-    } else {
-      setProfiles(profiles.map(p => p.id === id ? { ...p, plan_status: newStatus } : p))
+      if (error) {
+        alert(error.message)
+      } else {
+        setProfiles(profiles.map(p => p.id === id ? { ...p, plan_status: newStatus } : p))
+      }
+    } finally {
+      setUpdatingId(null)
     }
   }
 
   async function toggleAdmin(id: string, currentAdmin: boolean) {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ is_admin: !currentAdmin })
-      .eq('id', id)
+    try {
+      setUpdatingId(id)
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_admin: !currentAdmin })
+        .eq('id', id)
 
-    if (error) {
-      alert(error.message)
-    } else {
-      setProfiles(profiles.map(p => p.id === id ? { ...p, is_admin: !currentAdmin } : p))
+      if (error) {
+        alert(error.message)
+      } else {
+        setProfiles(profiles.map(p => p.id === id ? { ...p, is_admin: !currentAdmin } : p))
+      }
+    } finally {
+      setUpdatingId(null)
     }
   }
 
@@ -136,19 +147,21 @@ export default function AdminUserList() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                     <button
                       onClick={() => togglePlan(profile.id, profile.plan_status)}
-                      className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                      disabled={updatingId === profile.id}
+                      className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px] justify-center"
                     >
-                      {profile.plan_status === 'pro' ? 'Downgrade' : 'Upgrade'}
+                      {updatingId === profile.id ? 'Atualizando...' : (profile.plan_status === 'pro' ? 'Downgrade' : 'Upgrade')}
                     </button>
                     <button
                       onClick={() => toggleAdmin(profile.id, profile.is_admin)}
-                      className={`inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded shadow-sm transition-colors ${
+                      disabled={updatingId === profile.id}
+                      className={`inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded shadow-sm transition-colors min-w-[100px] justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
                         profile.is_admin 
                           ? 'text-red-700 bg-white hover:bg-red-50' 
                           : 'text-gray-700 bg-white hover:bg-gray-50'
                       }`}
                     >
-                      {profile.is_admin ? 'Revoke Admin' : 'Make Admin'}
+                      {updatingId === profile.id ? 'Atualizando...' : (profile.is_admin ? 'Revoke Admin' : 'Make Admin')}
                     </button>
                   </td>
                 </tr>
