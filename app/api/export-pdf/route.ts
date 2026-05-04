@@ -4,6 +4,7 @@ import chromium from '@sparticuz/chromium'
 import puppeteer from 'puppeteer-core'
 
 export async function POST(req: Request) {
+  let browser: any;
   try {
     const { content, branding } = await req.json()
     // Convert Markdown to HTML
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
         <head>
           <meta charset="UTF-8">
           <link href="https://fonts.googleapis.com/css2?family=${branding?.font_family?.replace(' ', '+') || 'Inter'}:wght@400;700&display=swap" rel="stylesheet">
-          <script src="https://cdn.tailwindcss.com"></script>
+          <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
           <style>
             @page { margin: 0; }
             body { 
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
           <div class="content-wrapper">
             ${branding?.logo_url ? `
               <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
-                <img src="${branding.logo_url}" style="max-height: 80px; object-contain: contain;">
+                <img src="${branding.logo_url}" style="max-height: 80px; object-fit: contain;">
               </div>
             ` : ''}
             
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
     `
 
     // Launch puppeteer with chromium
-    const browser = await puppeteer.launch({
+    browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: (chromium as any).defaultViewport,
       executablePath: await chromium.executablePath(),
@@ -77,8 +78,6 @@ export async function POST(req: Request) {
       margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' }
     })
     
-    await browser.close()
-
     return new NextResponse(pdf as any, {
       headers: {
         'Content-Type': 'application/pdf',
@@ -88,5 +87,9 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('PDF Generation Error:', error)
     return NextResponse.json({ error: 'Erro ao gerar PDF: ' + error.message }, { status: 500 })
+  } finally {
+    if (browser) {
+      await browser.close()
+    }
   }
 }
