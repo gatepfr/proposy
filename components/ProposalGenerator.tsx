@@ -20,6 +20,7 @@ type ProposalData = {
 export default function ProposalGenerator() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [exportPdfLoading, setExportPdfLoading] = useState(false)
   const [proposal, setProposal] = useState('')
   const [chatHistory, setChatHistory] = useState<Message[]>([])
   const [refinementInput, setRefinementInput] = useState('')
@@ -51,6 +52,38 @@ export default function ProposalGenerator() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatHistory])
+
+  const downloadPdf = async () => {
+    if (!proposal || exportPdfLoading) return
+    setExportPdfLoading(true)
+
+    try {
+      const response = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: proposal,
+          branding,
+        }),
+      })
+
+      if (!response.ok) throw new Error('Falha ao gerar PDF')
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Proposta-${formData.clientName.replace(/\s+/g, '-')}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error: any) {
+      alert('Erro ao baixar PDF: ' + error.message)
+    } finally {
+      setExportPdfLoading(false)
+    }
+  }
 
   const generateInitialProposal = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -215,10 +248,11 @@ export default function ProposalGenerator() {
                 Voltar
               </button>
               <button
-                className="px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm transition-all"
-                onClick={() => window.print()}
+                className="px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm transition-all disabled:opacity-50"
+                onClick={downloadPdf}
+                disabled={exportPdfLoading}
               >
-                Finalizar e PDF
+                {exportPdfLoading ? 'Baixando...' : 'Finalizar e PDF'}
               </button>
             </div>
           </div>
