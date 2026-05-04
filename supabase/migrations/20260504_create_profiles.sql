@@ -16,3 +16,18 @@ alter table profiles enable row level security;
 -- Policies
 create policy "Users can view own profile" on profiles for select using (auth.uid() = id);
 create policy "Users can update own profile" on profiles for update using (auth.uid() = id);
+create policy "Users can insert own profile" on profiles for insert with check (auth.uid() = id);
+
+-- Trigger for updated_at
+create or replace function handle_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger set_updated_at
+before update on profiles
+for each row
+execute procedure handle_updated_at();
