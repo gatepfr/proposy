@@ -81,10 +81,12 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    await supabaseService
-      .from('profiles')
-      .update({ proposal_count: profile.proposal_count + 1 })
-      .eq('id', user.id)
+    const { error: incrementError } = await supabaseService
+      .rpc('increment_proposal_count', { user_id: user.id })
+
+    if (incrementError) {
+      console.error('Error incrementing proposal count:', incrementError)
+    }
 
     return NextResponse.json({ content: proposalContent })
   } catch (error: any) {
