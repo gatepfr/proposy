@@ -6,6 +6,13 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export async function POST(req: Request) {
   try {
+    // Verificar token do webhook para segurança
+    const webhookToken = req.headers.get('asaas-access-token')
+    if (webhookToken !== process.env.ASAAS_WEBHOOK_TOKEN) {
+      console.warn('Webhook: Tentativa de acesso não autorizado')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await req.json()
     const { event, payment } = body
 
@@ -18,7 +25,8 @@ export async function POST(req: Request) {
 
       if (!userId) {
         console.error('Webhook: externalReference (userId) não encontrado no pagamento')
-        return NextResponse.json({ error: 'Missing externalReference' }, { status: 400 })
+        // Retornamos 200 para o Asaas não tentar reenviar um payload permanentemente inválido
+        return NextResponse.json({ received: true, warning: 'Missing externalReference' })
       }
 
       // Usar service role key para atualizar o perfil independente de RLS
