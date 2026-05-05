@@ -146,18 +146,8 @@ export default function ProposalGenerator() {
       setProposal(result.content)
       setChatHistory([{ role: 'assistant', content: 'Aqui está a primeira versão da sua proposta. O que gostaria de ajustar?' }])
 
-      // Increment proposal count
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const newCount = (branding?.proposal_count || 0) + 1
-        await supabase
-          .from('profiles')
-          .update({ proposal_count: newCount })
-          .eq('id', user.id)
-        
-        // Update local state
-        setBranding({ ...branding, proposal_count: newCount })
-      }
+      // Update local state (Backend increments DB atomically)
+      setBranding({ ...branding, proposal_count: (branding?.proposal_count || 0) + 1 })
     } catch (error: any) {
       alert('Erro ao gerar proposta: ' + error.message)
       setStep(1)
