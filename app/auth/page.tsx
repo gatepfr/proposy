@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import Link from 'next/link'
 
 export default function AuthPage() {
@@ -15,6 +15,12 @@ export default function AuthPage() {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!isSupabaseConfigured) {
+      setMessage('Erro: Supabase não configurado. Por favor, adicione as chaves no arquivo .env.local.')
+      return
+    }
+
     setLoading(true)
     setMessage('')
 
