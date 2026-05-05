@@ -1,6 +1,20 @@
-﻿import Link from 'next/link';
+﻿'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
+
+import { User } from '@supabase/supabase-js'
 
 export default function Home() {
+  const [user, setUser] = useState<User | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+    })
+  }, [])
+
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans p-6 text-center">
       <h1 className="text-5xl font-extrabold text-gray-900 tracking-tight mb-6">
@@ -13,10 +27,10 @@ export default function Home() {
       
       <div className="flex gap-4">
         <Link 
-          href="/dashboard" 
+          href={user ? "/dashboard" : "/auth"} 
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-transform hover:scale-105"
         >
-          Acessar o Dashboard
+          {user ? 'Acessar o Dashboard' : 'Começar Agora - Grátis'}
         </Link>
       </div>
     </div>

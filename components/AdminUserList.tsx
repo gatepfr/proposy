@@ -18,11 +18,7 @@ export default function AdminUserList() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchProfiles()
-  }, [])
-
-  async function fetchProfiles() {
+  const fetchProfiles = async () => {
     try {
       setLoading(true)
       const { data, error } = await supabase
@@ -32,12 +28,20 @@ export default function AdminUserList() {
 
       if (error) throw error
       setProfiles(data || [])
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('Ocorreu um erro ao buscar perfis')
+      }
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchProfiles()
+  }, [])
 
   async function togglePlan(id: string, currentStatus: string) {
     try {
