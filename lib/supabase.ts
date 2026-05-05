@@ -1,10 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
 
-// Export a function to check if Supabase is configured (useful for debugging)
-export const isSupabaseConfigured = !!supabaseUrl && !!supabaseAnonKey
-
+// Initialize with placeholders if missing to prevent createClient from throwing during build
+// In production, real values from Vercel/Env will override these
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+export const isSupabaseConfigured = 
+  !!process.env.NEXT_PUBLIC_SUPABASE_URL && 
+  !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
