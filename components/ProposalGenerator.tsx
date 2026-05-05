@@ -53,6 +53,37 @@ export default function ProposalGenerator() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatHistory])
 
+  const handleUpgrade = async () => {
+    setLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        alert('Você precisa estar logado para realizar esta ação.')
+        return
+      }
+
+      const response = await fetch('/api/payments/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      })
+
+      const data = await response.json()
+      if (data.error) throw new Error(data.error)
+      if (data.invoiceUrl) {
+        window.location.href = data.invoiceUrl
+      } else {
+        throw new Error('URL de checkout não encontrada')
+      }
+    } catch (error: any) {
+      alert('Erro ao iniciar checkout: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const downloadPdf = async () => {
     if (!proposal || exportPdfLoading) return
     setExportPdfLoading(true)
@@ -181,6 +212,22 @@ export default function ProposalGenerator() {
 
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-6">
+      {/* Top Navigation / Admin Link */}
+      {branding?.is_admin && (
+        <div className="flex justify-end mb-4">
+          <a 
+            href="/admin" 
+            className="text-xs font-semibold text-gray-500 hover:text-blue-600 flex items-center gap-1 transition-colors"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Painel Admin
+          </a>
+        </div>
+      )}
+
       {step === 1 ? (
         <div className="max-w-4xl mx-auto">
           {branding?.plan_status === 'free' && branding?.proposal_count >= 1 ? (
@@ -195,10 +242,11 @@ export default function ProposalGenerator() {
                 Você atingiu o limite de 1 proposta gratuita. Assine o plano Pro para gerar propostas ilimitadas e ter acesso a recursos exclusivos.
               </p>
               <button
-                onClick={() => window.location.href = '/settings'}
-                className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold py-4 px-10 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                onClick={handleUpgrade}
+                disabled={loading}
+                className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold py-4 px-10 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50"
               >
-                Assinar Plano Pro Agora
+                {loading ? 'Processando...' : 'Assinar Plano Pro Agora'}
               </button>
             </div>
           ) : (
@@ -210,10 +258,11 @@ export default function ProposalGenerator() {
                     <p className="text-sm text-blue-800 font-medium">Você está no plano gratuito ({branding?.proposal_count || 0}/1 propostas)</p>
                   </div>
                   <button 
-                    onClick={() => window.location.href = '/settings'}
-                    className="text-sm font-bold text-blue-600 hover:underline"
+                    onClick={handleUpgrade}
+                    disabled={loading}
+                    className="text-sm font-bold text-blue-600 hover:underline disabled:opacity-50"
                   >
-                    Fazer Upgrade →
+                    {loading ? 'Aguarde...' : 'Fazer Upgrade →'}
                   </button>
                 </div>
               ) : (
