@@ -87,6 +87,12 @@ export default function ProposalGenerator() {
 
   const generateInitialProposal = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Check plan limits
+    if (branding?.plan_status === 'free' && branding?.proposal_count >= 1) {
+      return
+    }
+
     setLoading(true)
     setStep(2)
 
@@ -108,6 +114,19 @@ export default function ProposalGenerator() {
 
       setProposal(result.content)
       setChatHistory([{ role: 'assistant', content: 'Aqui está a primeira versão da sua proposta. O que gostaria de ajustar?' }])
+
+      // Increment proposal count
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const newCount = (branding?.proposal_count || 0) + 1
+        await supabase
+          .from('profiles')
+          .update({ proposal_count: newCount })
+          .eq('id', user.id)
+        
+        // Update local state
+        setBranding({ ...branding, proposal_count: newCount })
+      }
     } catch (error: any) {
       alert('Erro ao gerar proposta: ' + error.message)
       setStep(1)
@@ -163,9 +182,53 @@ export default function ProposalGenerator() {
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-6">
       {step === 1 ? (
-        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 border border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Nova Proposta Comercial</h2>
-          <form onSubmit={generateInitialProposal} className="space-y-4">
+        <div className="max-w-4xl mx-auto">
+          {branding?.plan_status === 'free' && branding?.proposal_count >= 1 ? (
+            <div className="bg-white rounded-2xl shadow-xl p-12 text-center border border-gray-100">
+              <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">Limite Atingido!</h2>
+              <p className="text-gray-600 mb-8 text-lg">
+                Você atingiu o limite de 1 proposta gratuita. Assine o plano Pro para gerar propostas ilimitadas e ter acesso a recursos exclusivos.
+              </p>
+              <button
+                onClick={() => window.location.href = '/settings'}
+                className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold py-4 px-10 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
+              >
+                Assinar Plano Pro Agora
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+              {branding?.plan_status === 'free' ? (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">FREE</div>
+                    <p className="text-sm text-blue-800 font-medium">Você está no plano gratuito ({branding?.proposal_count || 0}/1 propostas)</p>
+                  </div>
+                  <button 
+                    onClick={() => window.location.href = '/settings'}
+                    className="text-sm font-bold text-blue-600 hover:underline"
+                  >
+                    Fazer Upgrade →
+                  </button>
+                </div>
+              ) : (
+                <div className="mb-6 flex justify-end">
+                  <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    PLANO PRO
+                  </div>
+                </div>
+              )}
+              
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Nova Proposta Comercial</h2>
+              <form onSubmit={generateInitialProposal} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Nome do Cliente</label>
@@ -232,7 +295,9 @@ export default function ProposalGenerator() {
             </button>
           </form>
         </div>
-      ) : (
+      )}
+    </div>
+  ) : (
         <div className="flex flex-col h-[calc(100vh-120px)] bg-gray-50 rounded-2xl overflow-hidden shadow-2xl border border-gray-200">
           {/* Header */}
           <div className="bg-white px-6 py-4 border-b flex justify-between items-center print:hidden">
